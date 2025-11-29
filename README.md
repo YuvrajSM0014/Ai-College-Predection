@@ -153,9 +153,4 @@ ai_college_recommender/
 
  Create advanced mentor dashboards.
 
-🤝 Contributing
 
-Contributions are welcome!
-Feel free to fork this repository and submit pull requests for features, fixes, or documentation impro
-git clone https://github.com/your-username/ai_college_recommender.git
-cd ai_college_recommender
