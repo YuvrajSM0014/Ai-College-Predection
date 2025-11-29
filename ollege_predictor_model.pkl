@@ -1,0 +1,92 @@
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import LabelEncoder
+import pickle
+
+# ==========================================
+# 1. GENERATE SYNTHETIC TRAINING DATA
+# ==========================================
+# In a real project, you would load a CSV here: data = pd.read_csv("past_admissions.csv")
+
+np.random.seed(42)
+num_samples = 1000
+
+# Generate random student profiles
+marks = np.random.randint(50, 100, num_samples)
+categories = np.random.choice(['General', 'OBC', 'SC', 'ST'], num_samples)
+locations = np.random.choice(['Mumbai', 'Pune', 'Delhi', 'Bangalore', 'Chennai'], num_samples)
+exams = np.random.choice(['JEE', 'MHTCET', 'BITSAT'], num_samples)
+
+# Create a Target Variable (College) based on logic so the AI has a pattern to learn
+colleges = []
+for m, c, l, e in zip(marks, categories, locations, exams):
+    # Logic: High marks + Specific Location = Top College
+    if m >= 95:
+        colleges.append("IIT Bombay")
+    elif m >= 90 and l == "Pilani":
+        colleges.append("BITS Pilani")
+    elif m >= 88 and l == "Bangalore":
+        colleges.append("IIIT Bangalore")
+    elif m >= 85:
+        colleges.append("NIT Trichy")
+    elif m >= 80 and l == "Pune":
+        colleges.append("COEP Pune")
+    elif m >= 75 and l == "Mumbai":
+        colleges.append("VJTI Mumbai")
+    elif m >= 70:
+        colleges.append("VIT Vellore")
+    else:
+        colleges.append("PCCOE Pune")
+
+df = pd.DataFrame({
+    'Exam': exams,
+    'Marks': marks,
+    'Category': categories,
+    'Preferred_Location': locations,
+    'Admitted_College': colleges
+})
+
+# ==========================================
+# 2. PREPROCESSING (ENCODING)
+# ==========================================
+# Machine Learning only understands numbers, not text.
+
+le_exam = LabelEncoder()
+le_category = LabelEncoder()
+le_location = LabelEncoder()
+le_college = LabelEncoder()
+
+df['Exam_Enc'] = le_exam.fit_transform(df['Exam'])
+df['Category_Enc'] = le_category.fit_transform(df['Category'])
+df['Location_Enc'] = le_location.fit_transform(df['Preferred_Location'])
+df['College_Enc'] = le_college.fit_transform(df['Admitted_College'])
+
+# Features (Inputs) -> Label (Output)
+X = df[['Exam_Enc', 'Marks', 'Category_Enc', 'Location_Enc']]
+y = df['College_Enc']
+
+# ==========================================
+# 3. TRAIN THE MODEL
+# ==========================================
+print("Training AI Model...")
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X, y)
+
+# ==========================================
+# 4. SAVE THE MODEL & ENCODERS
+# ==========================================
+# We must save the encoders so the App knows that "Mumbai" = 1, etc.
+data_to_save = {
+    "model": model,
+    "le_exam": le_exam,
+    "le_category": le_category,
+    "le_location": le_location,
+    "le_college": le_college
+}
+
+with open("college_predictor_model.pkl", "wb") as f:
+    pickle.dump(data_to_save, f)
+
+print("✅ Success! Model saved as 'college_predictor_model.pkl'")
+print("Now run your Streamlit app.")
